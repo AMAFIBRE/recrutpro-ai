@@ -5,10 +5,11 @@ import { AdPreview } from './components/AdPreview';
 import { ApplicationPage } from './components/ApplicationPage';
 import { ApplicationsDashboard } from './components/ApplicationsDashboard';
 import { PublishModal } from './components/PublishModal';
+import { FranceTravailDashboard } from './components/FranceTravailDashboard';
 import { JobFormData, GeneratedAd, GenerationResponse } from './types';
 import { INITIAL_FORM_DATA } from './constants';
 import { generateJobAds } from './services/geminiService';
-import { Sparkles, Key, History, Clock, ArrowRight, Users, Rocket } from 'lucide-react';
+import { Sparkles, Key, History, Clock, ArrowRight, Users, Rocket, Globe } from 'lucide-react';
 
 type AppView = 'main' | 'apply' | 'dashboard';
 
@@ -30,6 +31,9 @@ function App() {
   // History State
   const [history, setHistory] = useState<{formData: JobFormData, response: GenerationResponse}[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  
+  // France Travail Dashboard state
+  const [showFranceTravail, setShowFranceTravail] = useState(false);
 
   // Handle URL routing
   useEffect(() => {
@@ -176,6 +180,12 @@ function App() {
       {/* Dashboard & History Buttons */}
       <div className="fixed bottom-6 left-6 z-40 flex flex-col gap-2 md:hidden">
         <button 
+          onClick={() => setShowFranceTravail(true)}
+          className="bg-[#162766] text-white shadow-xl rounded-full p-3 hover:bg-[#0d1a4a] transition-all"
+        >
+          <Globe className="w-6 h-6" />
+        </button>
+        <button 
           onClick={() => navigateTo('dashboard')}
           className="bg-blue-600 text-white shadow-xl rounded-full p-3 hover:bg-blue-700 transition-all"
         >
@@ -191,6 +201,13 @@ function App() {
 
       {/* Desktop Sidebar Buttons */}
       <div className="fixed top-24 right-0 z-30 hidden lg:flex flex-col gap-1">
+         <button 
+           onClick={() => setShowFranceTravail(true)}
+           className="bg-[#162766] text-white border-l border-y border-[#0d1a4a] shadow-md rounded-l-xl p-3 hover:pl-4 transition-all flex items-center gap-2"
+         >
+            <Globe className="w-5 h-5" />
+            <span className="text-xs font-bold writing-vertical-lr">FRANCE TRAVAIL</span>
+         </button>
          <button 
            onClick={() => navigateTo('dashboard')}
            className="bg-blue-600 text-white border-l border-y border-blue-700 shadow-md rounded-l-xl p-3 hover:pl-4 transition-all flex items-center gap-2"
@@ -346,6 +363,11 @@ function App() {
           formData={formData}
           ad={selectedAdForPublish}
         />
+      )}
+
+      {/* FRANCE TRAVAIL DASHBOARD */}
+      {showFranceTravail && (
+        <FranceTravailDashboard onClose={() => setShowFranceTravail(false)} />
       )}
       
       <footer className="bg-white border-t border-slate-200 py-6 mt-auto">

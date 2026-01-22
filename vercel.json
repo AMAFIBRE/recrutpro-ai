@@ -1,7 +1,6 @@
 {
-  "rewrites": [
-    { "source": "/postuler/:slug", "destination": "/" },
-    { "source": "/dashboard", "destination": "/" },
-    { "source": "/candidatures", "destination": "/" }
-  ]
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "outputDirectory": "dist"
 }
