@@ -62,38 +62,40 @@ export const suggestJobDetails = async (jobTitle: string): Promise<Partial<JobFo
   }
 };
 
-// --- FONCTION 2 : GÉNÉRATION D'IMAGE ---
-const generateJobImage = async (jobTitle: string, sector: string): Promise<string | undefined> => {
-  const ai = getClient();
-  try {
-    const prompt = `Professional 3D isometric illustration for a job recruitment post about "${jobTitle}" in the "${sector}" industry. 
-    Style: Modern, clean, corporate. 
-    Colors: Blue (#0066b3) and white palette with subtle accents.
-    Must include: Professional workers in action, relevant industry tools/equipment.
-    No text, clean white background, high quality render.`;
-    
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
-      contents: { parts: [{ text: prompt }] },
-      config: {
-        imageConfig: {
-          aspectRatio: "16:9",
-        }
-      },
-    });
+// --- FONCTION 2 : IMAGE PLACEHOLDER (Unsplash gratuit) ---
+const getJobImage = (jobTitle: string, sector: string): string => {
+  // Images Unsplash gratuites par secteur
+  const sectorImages: Record<string, string> = {
+    'BTP': 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&h=450&fit=crop',
+    'Bâtiment': 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&h=450&fit=crop',
+    'Construction': 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&h=450&fit=crop',
+    'Logistique': 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&h=450&fit=crop',
+    'Transport': 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&h=450&fit=crop',
+    'Industrie': 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=450&fit=crop',
+    'Commerce': 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=450&fit=crop',
+    'Vente': 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=450&fit=crop',
+    'Restauration': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=450&fit=crop',
+    'Hôtellerie': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=450&fit=crop',
+    'Santé': 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&h=450&fit=crop',
+    'Médical': 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&h=450&fit=crop',
+    'IT': 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&h=450&fit=crop',
+    'Tech': 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&h=450&fit=crop',
+    'Informatique': 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&h=450&fit=crop',
+    'Agriculture': 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=800&h=450&fit=crop',
+    'Nettoyage': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&h=450&fit=crop',
+    'Sécurité': 'https://images.unsplash.com/photo-1555817128-342e1c8b3101?w=800&h=450&fit=crop',
+  };
 
-    if (response.candidates?.[0]?.content?.parts) {
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData && part.inlineData.data) {
-          return part.inlineData.data;
-        }
-      }
+  // Chercher une correspondance par mot-clé
+  const sectorLower = sector.toLowerCase();
+  for (const [key, url] of Object.entries(sectorImages)) {
+    if (sectorLower.includes(key.toLowerCase())) {
+      return url;
     }
-    return undefined;
-  } catch (error) {
-    console.warn("L'image n'a pas pu être générée (ce n'est pas bloquant):", error);
-    return undefined;
   }
+
+  // Image par défaut (bureau/travail)
+  return 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=800&h=450&fit=crop';
 };
 
 // --- FONCTION 3 : GÉNÉRATION DES ANNONCES (OPTIMISÉE) ---
@@ -256,10 +258,8 @@ export const generateJobAds = async (data: JobFormData): Promise<GenerationRespo
     }
   });
 
-  const imagePromise = generateJobImage(data.jobTitle, data.sector);
-
   try {
-    const [textResponse, base64Image] = await Promise.all([textPromise, imagePromise]);
+    const textResponse = await textPromise;
 
     if (!textResponse.text) {
       throw new Error("L'IA n'a renvoyé aucun texte.");
@@ -267,11 +267,10 @@ export const generateJobAds = async (data: JobFormData): Promise<GenerationRespo
 
     const res = JSON.parse(textResponse.text) as GenerationResponse;
 
-    if (base64Image) {
-      const socialAd = res.ads.find(ad => ad.channel === 'Social');
-      if (socialAd) {
-        socialAd.base64Image = base64Image;
-      }
+    // Ajouter l'image Unsplash à l'annonce Social
+    const socialAd = res.ads.find(ad => ad.channel === 'Social');
+    if (socialAd) {
+      socialAd.imageUrl = getJobImage(data.jobTitle, data.sector);
     }
 
     res.timestamp = Date.now();
