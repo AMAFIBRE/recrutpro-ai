@@ -1,8 +1,8 @@
 // Vercel Serverless Function - Proxy pour France Travail API
 // Résout le problème de CORS
 
-const FRANCE_TRAVAIL_CLIENT_ID = process.env.VITE_FRANCE_TRAVAIL_CLIENT_ID;
-const FRANCE_TRAVAIL_CLIENT_SECRET = process.env.VITE_FRANCE_TRAVAIL_CLIENT_SECRET;
+const FRANCE_TRAVAIL_CLIENT_ID = process.env.FRANCE_TRAVAIL_CLIENT_ID;
+const FRANCE_TRAVAIL_CLIENT_SECRET = process.env.FRANCE_TRAVAIL_CLIENT_SECRET;
 const AUTH_URL = 'https://entreprise.francetravail.fr/connexion/oauth2/access_token?realm=/partenaire';
 const API_BASE_URL = 'https://api.francetravail.io/partenaire';
 
@@ -61,6 +61,15 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing endpoint parameter' });
   }
 
+  // Vérifier les credentials
+  if (!FRANCE_TRAVAIL_CLIENT_ID || !FRANCE_TRAVAIL_CLIENT_SECRET) {
+    console.error('Missing France Travail credentials');
+    return res.status(500).json({ 
+      error: 'Configuration manquante',
+      details: 'Les credentials France Travail ne sont pas configurés sur Vercel'
+    });
+  }
+
   try {
     let scopes = [];
     let apiUrl = '';
@@ -69,12 +78,12 @@ export default async function handler(req, res) {
     switch (endpoint) {
       case 'metiers':
         scopes = ['api_rome-metiersv1', 'nomenclatureRome'];
-        apiUrl = `${API_BASE_URL}/rome-metiers/v1/metiers?libelle=${encodeURIComponent(params.keyword || '')}`;
+        apiUrl = `${API_BASE_URL}/rome-metiers/v1/metiers/appellation?champs=libelle,code&motCle=${encodeURIComponent(params.keyword || '')}`;
         break;
 
       case 'competences':
         scopes = ['api_rome-competencesv1', 'nomenclatureRome'];
-        apiUrl = `${API_BASE_URL}/rome-competences/v1/competence?code=${params.codeRome}`;
+        apiUrl = `${API_BASE_URL}/rome-competences/v1/competence/${params.codeRome}`;
         break;
 
       case 'labonneboite':
@@ -94,13 +103,15 @@ export default async function handler(req, res) {
 
       case 'marche':
         scopes = ['api_infotravailv1', 'offresdemploi'];
-        apiUrl = `${API_BASE_URL}/infotravail/v1/marche?codeRome=${params.codeRome}`;
-        if (params.codeRegion) apiUrl += `&codeRegion=${params.codeRegion}`;
+        apiUrl = `${API_BASE_URL}/infotravail/v1/marche/${params.codeRome}`;
+        if (params.codeRegion) apiUrl += `?codeRegion=${params.codeRegion}`;
         break;
 
       default:
-        return res.status(400).json({ error: 'Unknown endpoint' });
+        return res.status(400).json({ error: 'Unknown endpoint: ' + endpoint });
     }
+
+    console.log('Calling France Travail API:', endpoint, apiUrl);
 
     const token = await getAccessToken(scopes);
 
@@ -111,20 +122,34 @@ export default async function handler(req, res) {
       },
     });
 
+    const responseText = await apiResponse.text();
+    console.log('API Response status:', apiResponse.status);
+
     if (!apiResponse.ok) {
-      const errorText = await apiResponse.text();
-      console.error(`Erreur API ${endpoint}:`, errorText);
+      console.error(`Erreur API ${endpoint}:`, responseText);
       return res.status(apiResponse.status).json({ 
         error: `API Error: ${apiResponse.status}`,
-        details: errorText 
+        details: responseText,
+        endpoint: endpoint,
+        url: apiUrl
       });
     }
 
-    const data = await apiResponse.json();
+    // Parser la réponse JSON
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      data = responseText;
+    }
+
     return res.status(200).json(data);
 
   } catch (error) {
     console.error('Erreur proxy:', error);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ 
+      error: error.message,
+      stack: error.stack 
+    });
   }
 }

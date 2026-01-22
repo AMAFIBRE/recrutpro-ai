@@ -98,14 +98,38 @@ export const searchMetiers = async (keyword: string): Promise<RomeMetier[]> => {
   try {
     const response = await fetch(`${API_PROXY_URL}?endpoint=metiers&keyword=${encodeURIComponent(keyword)}`);
     
+    const data = await response.json();
+    
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('Erreur recherche métiers:', errorData);
+      console.error('Erreur recherche métiers:', data);
       return [];
     }
 
-    const data = await response.json();
-    return Array.isArray(data) ? data : [];
+    // L'API peut retourner différents formats
+    if (Array.isArray(data)) {
+      return data.map((item: any) => ({
+        code: item.code || item.codeRome || item.codeAppellation,
+        libelle: item.libelle || item.intitule || item.libelleAppellation,
+      }));
+    }
+    
+    // Si c'est un objet avec une propriété contenant les résultats
+    if (data.appellations) {
+      return data.appellations.map((item: any) => ({
+        code: item.code || item.codeAppellation,
+        libelle: item.libelle || item.libelleAppellation,
+      }));
+    }
+
+    if (data.metiers) {
+      return data.metiers.map((item: any) => ({
+        code: item.code,
+        libelle: item.libelle,
+      }));
+    }
+
+    console.log('Format de réponse inattendu:', data);
+    return [];
   } catch (error) {
     console.error('Erreur searchMetiers:', error);
     return [];
