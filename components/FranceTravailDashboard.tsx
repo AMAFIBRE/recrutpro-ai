@@ -5,7 +5,6 @@ import {
   RefreshCw, CheckCircle, XCircle, Info, Globe, Zap
 } from 'lucide-react';
 import {
-  isFranceTravailConfigured,
   searchMetiers,
   getCompetencesByRome,
   searchEntreprisesQuiRecrutent,
@@ -28,7 +27,6 @@ interface Props {
 type TabType = 'marche' | 'entreprises' | 'offres' | 'candidats';
 
 export const FranceTravailDashboard: React.FC<Props> = ({ onClose }) => {
-  const [isConfigured, setIsConfigured] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('marche');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,10 +43,6 @@ export const FranceTravailDashboard: React.FC<Props> = ({ onClose }) => {
   const [statsMarche, setStatsMarche] = useState<StatsMarche | null>(null);
   const [offres, setOffres] = useState<OffreFranceTravail[]>([]);
   const [candidats, setCandidats] = useState<ProfilDemandeur[]>([]);
-
-  useEffect(() => {
-    setIsConfigured(isFranceTravailConfigured());
-  }, []);
 
   // Recherche de métiers ROME
   const handleSearchMetiers = async () => {
@@ -165,30 +159,6 @@ export const FranceTravailDashboard: React.FC<Props> = ({ onClose }) => {
         break;
     }
   }, [activeTab, selectedRome, selectedVille]);
-
-  if (!isConfigured) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose}></div>
-        <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center">
-          <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-slate-900 mb-2">Configuration requise</h2>
-          <p className="text-slate-600 mb-4">
-            Les credentials France Travail ne sont pas configurés dans Vercel.
-          </p>
-          <div className="bg-slate-100 rounded-lg p-4 text-left text-sm">
-            <p className="font-mono text-xs">
-              VITE_FRANCE_TRAVAIL_CLIENT_ID=...<br/>
-              VITE_FRANCE_TRAVAIL_CLIENT_SECRET=...
-            </p>
-          </div>
-          <button onClick={onClose} className="mt-4 px-6 py-2 bg-slate-200 rounded-lg">
-            Fermer
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="fixed inset-0 z-50 flex">
