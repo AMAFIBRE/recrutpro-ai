@@ -50,6 +50,15 @@ export const AdPreview: React.FC<AdPreviewProps> = ({ ads, formData, fullRespons
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Copier le texte puis ouvrir le lien
+  const copyAndOpen = (url: string, text: string, platformName: string) => {
+    navigator.clipboard.writeText(cleanText(text));
+    showToast(`✅ Texte copié ! Collez-le sur ${platformName}`);
+    setTimeout(() => {
+      window.open(url, '_blank');
+    }, 500);
+  };
+
   const getInitials = (name: string) => name ? name.substring(0, 2).toUpperCase() : 'RP';
 
   const handleExportPDF = () => {
@@ -356,7 +365,13 @@ export const AdPreview: React.FC<AdPreviewProps> = ({ ads, formData, fullRespons
                               
                               {/* Social Media Image Placeholder / Generated Image */}
                               <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50 h-56 w-full flex items-center justify-center text-slate-400 overflow-hidden relative">
-                                  {currentAd.base64Image ? (
+                                  {currentAd.imageUrl ? (
+                                    <img 
+                                      src={currentAd.imageUrl} 
+                                      alt="Job Post Image" 
+                                      className="w-full h-full object-cover animate-in fade-in duration-700"
+                                    />
+                                  ) : currentAd.base64Image ? (
                                     <img 
                                       src={`data:image/jpeg;base64,${currentAd.base64Image}`} 
                                       alt="Generated Job Post" 
@@ -365,7 +380,7 @@ export const AdPreview: React.FC<AdPreviewProps> = ({ ads, formData, fullRespons
                                   ) : (
                                     <div className="text-center">
                                         <Image className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                                        <span className="text-xs font-medium text-slate-400">Génération de l'image en cours ou indisponible...</span>
+                                        <span className="text-xs font-medium text-slate-400">Image non disponible</span>
                                     </div>
                                   )}
                               </div>
@@ -406,87 +421,75 @@ export const AdPreview: React.FC<AdPreviewProps> = ({ ads, formData, fullRespons
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                    {/* SHOW FOR LINKEDIN OR DEFAULT */}
                    {currentAd?.channel === 'LinkedIn' && (
-                     <a 
-                       href="https://www.linkedin.com/post/new" 
-                       target="_blank" 
-                       rel="noreferrer"
+                     <button 
+                       onClick={() => copyAndOpen('https://www.linkedin.com/post/new', currentAd.content, 'LinkedIn')}
                        className="sm:col-span-3 group bg-[#0a66c2] text-white p-4 rounded-xl border border-[#0a66c2] hover:bg-[#004182] hover:shadow-md transition-all flex items-center justify-center gap-3 cursor-pointer"
                      >
                        <Linkedin className="w-6 h-6" />
-                       <span className="font-bold">Créer un post LinkedIn maintenant</span>
+                       <span className="font-bold">Copier & Publier sur LinkedIn</span>
                        <ExternalLink className="w-4 h-4 ml-2" />
-                     </a>
+                     </button>
                    )}
 
                    {/* SHOW FOR SOCIAL */}
                    {currentAd?.channel === 'Social' && (
                       <>
-                        <a 
-                          href="https://twitter.com/compose/tweet" 
-                          target="_blank" 
-                          rel="noreferrer"
+                        <button 
+                          onClick={() => copyAndOpen('https://twitter.com/compose/tweet', currentAd.content, 'X (Twitter)')}
                           className="group bg-black text-white p-4 rounded-xl border border-black hover:bg-slate-800 transition-all flex items-center justify-center gap-3 cursor-pointer"
                         >
                           <span className="font-bold text-lg">X</span>
-                          <span className="font-bold">Poster sur X</span>
+                          <span className="font-bold">Copier & Poster sur X</span>
                           <ExternalLink className="w-4 h-4 ml-auto" />
-                        </a>
-                        <a 
-                          href="https://www.facebook.com/" 
-                          target="_blank" 
-                          rel="noreferrer"
+                        </button>
+                        <button 
+                          onClick={() => copyAndOpen('https://www.facebook.com/', currentAd.content, 'Facebook')}
                           className="group bg-[#1877F2] text-white p-4 rounded-xl border border-[#1877F2] hover:bg-[#1465d1] transition-all flex items-center justify-center gap-3 cursor-pointer"
                         >
-                          <span className="font-bold">Facebook</span>
+                          <span className="font-bold">Copier & Poster sur Facebook</span>
                           <ExternalLink className="w-4 h-4 ml-auto" />
-                        </a>
+                        </button>
                       </>
                    )}
 
                    {/* SHOW FOR JOBBOARD (DEFAULT) */}
                    {currentAd?.channel === 'Jobboard' && (
                      <>
-                       <a 
-                         href="https://recruteur.hellowork.com/" 
-                         target="_blank" 
-                         rel="noreferrer"
+                       <button 
+                         onClick={() => copyAndOpen('https://recruteur.hellowork.com/', currentAd.content, 'HelloWork')}
                          className="group bg-white p-4 rounded-xl border border-slate-200 hover:border-indigo-400 hover:shadow-md transition-all flex items-center gap-3 cursor-pointer"
                        >
                          <div className="w-10 h-10 bg-[#E60000] rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-sm shrink-0">HW</div>
                          <div className="min-w-0">
                             <div className="font-bold text-slate-900 group-hover:text-blue-600 truncate">HelloWork</div>
-                            <div className="text-xs text-slate-500">N°1 en France</div>
+                            <div className="text-xs text-slate-500">Copier & Publier</div>
                          </div>
                          <ExternalLink className="w-4 h-4 text-slate-300 ml-auto group-hover:text-indigo-400 shrink-0" />
-                       </a>
+                       </button>
 
-                       <a 
-                         href="https://entreprise.francetravail.fr/" 
-                         target="_blank" 
-                         rel="noreferrer"
+                       <button 
+                         onClick={() => copyAndOpen('https://entreprise.francetravail.fr/', currentAd.content, 'France Travail')}
                          className="group bg-white p-4 rounded-xl border border-slate-200 hover:border-indigo-400 hover:shadow-md transition-all flex items-center gap-3 cursor-pointer"
                        >
                          <div className="w-10 h-10 bg-[#162766] rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-sm shrink-0">FT</div>
                          <div className="min-w-0">
                             <div className="font-bold text-slate-900 group-hover:text-blue-600 truncate">France Travail</div>
-                            <div className="text-xs text-slate-500">Service Public</div>
+                            <div className="text-xs text-slate-500">Copier & Publier</div>
                          </div>
                          <ExternalLink className="w-4 h-4 text-slate-300 ml-auto group-hover:text-indigo-400 shrink-0" />
-                       </a>
+                       </button>
 
-                       <a 
-                         href="https://fr.indeed.com/recrutement" 
-                         target="_blank" 
-                         rel="noreferrer"
+                       <button 
+                         onClick={() => copyAndOpen('https://fr.indeed.com/recrutement', currentAd.content, 'Indeed')}
                          className="group bg-white p-4 rounded-xl border border-slate-200 hover:border-indigo-400 hover:shadow-md transition-all flex items-center gap-3 cursor-pointer"
                        >
                          <div className="w-10 h-10 bg-[#003A9B] rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-sm shrink-0">IN</div>
                          <div className="min-w-0">
                             <div className="font-bold text-slate-900 group-hover:text-blue-600 truncate">Indeed</div>
-                            <div className="text-xs text-slate-500">Leader Mondial</div>
+                            <div className="text-xs text-slate-500">Copier & Publier</div>
                          </div>
                          <ExternalLink className="w-4 h-4 text-slate-300 ml-auto group-hover:text-indigo-400 shrink-0" />
-                       </a>
+                       </button>
                      </>
                    )}
                 </div>
