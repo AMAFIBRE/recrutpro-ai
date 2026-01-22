@@ -40,6 +40,7 @@ export interface GeneratedAd {
   hashtags?: string[];
   seoKeywords?: string[];
   base64Image?: string;
+  imageUrl?: string;
 }
 
 export interface InterviewQuestion {
